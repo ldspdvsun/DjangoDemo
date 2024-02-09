@@ -1,0 +1,75 @@
+{% extends 'layout.html' %}
+
+{% block css %}
+    <style>
+        .font_style {
+            text-align: center;
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+    <div class="container">
+        <div style="margin-bottom: 10px">
+            <a href="/admin1/add" class="btn btn-primary btn-success">
+                <span class="glyphicon glyphicon-plus" aria-hidden="true"></span>
+                新建管理员
+            </a>
+            <div style="float: right;width: 300px;">
+                <form method="get">
+                    <div class="input-group">
+                        <input type="text" name="search" class="form-control" placeholder="姓名...">
+                        <span class="input-group-btn">
+                            <button class="btn btn-default" type="submit">
+                                <span class="glyphicon glyphicon-search" aria-hidden="true"></span>
+                            </button>
+                        </span>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div class="panel panel-default">
+            <!-- Default panel contents -->
+            <div class="panel-heading">
+                <span class="glyphicon glyphicon-list-alt" aria-hidden="true"></span>
+                管理员列表
+            </div>
+
+            <!-- Table -->
+            <table class="table table-bordered">
+                {#                <thead style="text-align: center;">#}
+                <thead>
+                <tr>
+                    <th class="font_style">序号</th>
+                    <th class="font_style">管理员姓名</th>
+                    <th class="font_style">密码</th>
+                    <th class="font_style">操作</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for obj in query_set %}
+                    <tr class="text-center">
+                        {#                        <td>{{ obj.id }}</td>#}
+                        {# 遍历前端表单的序号 #}
+                        <td>{{ forloop.counter }}</td>
+                        <td>{{ obj.username }}</td>
+                        <td>**********</td>
+                        {#                        <td>{{ obj.password }}</td>#}
+                        <td>
+                            <a href="/admin1/{{ obj.id }}/reset/" class="btn btn-default btn-xs">重置密码</a>
+                            <a href="/admin1/{{ obj.id }}/update/" class="btn btn-primary btn-xs">编辑</a>
+                            <a href="/admin1/delete/?del_id={{ obj.id }}" class="btn btn-danger btn-xs">删除</a>
+                        </td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+
+            <ul class="pagination" style="float: right">
+                {{ page_string }}
+            </ul>
+        </div>
+    </div>
+
+{% endblock %}

@@ -1,0 +1,302 @@
+{% extends 'layout.html' %}
+{% load static %}
+
+{% block content %}
+    <div class="container">
+        <div class="panel">
+            <form id="attributeForm" method="post">
+                {% csrf_token %}
+                <label for="xAttribute">X 轴:</label>
+                <select id="xAttribute" name="xAttribute">
+                    {% for key, value in model_attributes_verbose.items %}
+                        <option value="{{ key }}">{{ value }}</option>
+                    {% endfor %}
+                </select>
+                <label for="yAttribute">Y 轴:</label>
+                <select id="yAttribute" name="yAttribute">
+                    {% for key, value in model_attributes_verbose.items %}
+                        <option value="{{ key }}">{{ value }}</option>
+                    {% endfor %}
+                </select>
+                <button type="button" onclick="submitAttributes()">Submit</button>
+            </form>
+
+        </div>
+        <div class="panel panel-default">
+            <div class="panel-heading">折线图</div>
+            <div class="panel-body">
+                <div id="m1" style="width: 100%;height: 400px;"></div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-sm-8">
+                <div class="panel panel-default">
+                    <div class="panel panel-heading">柱状图</div>
+                    <div class="panel-body">
+                        <div id="m2" style="width: 100%;height: 400px;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-sm-4">
+                <div class="panel panel-default">
+                    <div class="panel panel-heading">饼图</div>
+                    <div class="panel-body">
+                        <div id="m3" style="width: 100%;height: 400px;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+{% endblock %}
+
+{% block js %}
+
+    <script src="{% static 'js/echarts.js' %}"></script>
+
+    <script type="text/javascript">
+        // 定义全局变量
+        X_KEY = 'id';
+        Y_KEY = 'id';
+        X_VALUE = undefined;
+        Y_VALUE = undefined;
+
+        $(function () {
+            initLine();
+            initBar();
+            initPie();
+            submitAttributes();
+        })
+
+        function submitAttributes() {
+            var xValue = document.getElementById("xAttribute").value;
+            var yValue = document.getElementById("yAttribute").value;
+
+            // 发送 AJAX 请求到后端
+            $.ajax({
+                url: "/user/get_chart_attributes/",
+                type: "POST",
+                data: {
+                    'xValue': xValue,
+                    'yValue': yValue,
+                    'csrfmiddlewaretoken': '{{ csrf_token }}'
+                },
+                success: function (res) {
+                    if (res.status) {
+                        console.log(res);
+                        X_KEY = res.data.X_KEY;
+                        Y_KEY = res.data.Y_KEY;
+                        X_VALUE = res.data.X_VALUE;
+                        Y_VALUE = res.data.Y_VALUE;
+                        initLine();
+                        initBar();
+                        initPie();
+                    } else {
+                        console.log(error);
+                    }
+                },
+            });
+        }
+
+        /**
+         * 初始化折线图
+         */
+        function initLine() {
+            var chartDom = document.getElementById('m1');
+            var myChart = echarts.init(chartDom);
+
+            var option;
+            option = {
+                title: {
+                    text: '',
+                    left: "center",
+                },
+                tooltip: {
+                    trigger: 'axis'
+                },
+                legend: {
+                    data: [],
+                    bottom: 0,
+                },
+                toolbox: {
+                    feature: {
+                        saveAsImage: {}
+                    }
+                },
+                xAxis: {
+                    type: 'category',
+                    boundaryGap: false,
+                    data: []
+                },
+                yAxis: {
+                    type: 'value'
+                },
+                series: []
+            };
+
+            $.ajax({
+                url: "/user/chart_line/",
+                type: "get",
+                data: {
+                    "xValue": X_KEY,
+                    "yValue": Y_KEY,
+                },
+                dataType: "JSON",
+                success: function (res) {
+                    if (res.status) {
+                        option.title.text = X_VALUE + " - " + Y_VALUE + " 折线图";
+                        option.legend.data = res.data.legend;
+                        option.xAxis.data = res.data.x_axis_list;
+                        option.series = res.data.series_list;
+
+                        // 向后台发送数据请求
+                        myChart.setOption(option)
+                    } else {
+                        alert(res.error)
+                    }
+                }
+            })
+
+
+        }
+
+        /**
+         * 初始化柱状图
+         */
+        function initBar() {
+
+            // 基于准备好的dom，初始化echarts实例
+            var myChart = echarts.init(document.getElementById('m2'));
+
+            // 指定图表的配置项和数据
+            var option = {
+                title: {
+                    text: '',
+                    {#标题居中#}
+                    textAlign: "auto",
+                    left: "center",
+                },
+                tooltip: {},
+                legend: {
+                    data: [], // 后台获取
+                    {# 图示例显示在下方 #}
+                    bottom: 0,
+                },
+                toolbox: {
+                    feature: {
+                        saveAsImage: {}
+                    }
+                },
+                xAxis: {
+                    data: [] // 后台获取
+                },
+                yAxis: {},
+                series: [] // 后台获取
+            };
+
+            // 向后台发送柱状图数据请求
+            $.ajax({
+                url: "/user/chart_bar/",
+                type: "get",
+                data: {
+                    "xValue": X_KEY,
+                    "yValue": Y_KEY,
+                },
+                dataType: "JSON",
+                success: function (res) {
+                    // 将后台发送的数据更新到option中
+                    if (res.status) {
+                        option.title.text = X_VALUE + " - " + Y_VALUE + " 柱状图";
+                        option.legend.data = res.data.legend;
+                        option.xAxis.data = res.data.x_axis_list;
+                        option.series = res.data.series_list;
+
+                        // 使用刚指定的配置项和数据显示图表。
+                        myChart.setOption(option);
+                    } else {
+                        alert(res.error)
+                    }
+                }
+            })
+        }
+
+        /**
+         * 初始化饼状图
+         */
+        function initPie() {
+
+            var chartDom = document.getElementById('m3');
+            var myChart = echarts.init(chartDom);
+            var option;
+
+            option = {
+                title: {
+                    text: '',
+                    left: 'center'
+                },
+                tooltip: {
+                    trigger: 'item'
+                },
+                toolbox: {
+                    feature: {
+                        saveAsImage: {}
+                    }
+                },
+                legend: {
+                    orient: 'vertical',
+                    left: 'left',
+                    {# 图示例显示在下方 #}
+                    bottom: 0,
+                },
+                series: [
+                    {
+                        name: '',
+                        type: 'pie',
+                        radius: '50%',
+                        data: [],
+                        emphasis: {
+                            itemStyle: {
+                                shadowBlur: 10,
+                                shadowOffsetX: 0,
+                                shadowColor: 'rgba(0, 0, 0, 0.5)'
+                            }
+                        }
+                    }
+                ]
+            };
+
+            option && myChart.setOption(option);
+
+            // 向后台发送柱状图数据请求
+            $.ajax({
+                url: "/user/chart_pie/",
+                type: "get",
+                data: {
+                    "xValue": X_KEY,
+                    "yValue": Y_KEY,
+                },
+                dataType: "JSON",
+                success: function (res) {
+                    // 将后台发送的数据更新到option中
+                    if (res.status) {
+                        console.log("PIE"+res)
+                        option.title.text = X_VALUE + " - " + Y_VALUE + " 饼状图";
+                        option.series[0].name = res.name;
+                        option.series[0].data = res.data.series_data;
+
+                        // 使用刚指定的配置项和数据显示图表。
+                        myChart.setOption(option);
+                    } else {
+                        alert(res.error)
+                    }
+                }
+            })
+
+        }
+
+
+    </script>
+{% endblock %}

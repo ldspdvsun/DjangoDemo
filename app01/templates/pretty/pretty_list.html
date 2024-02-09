@@ -1,0 +1,70 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+    <div class="container">
+        <div style="margin-bottom: 10px">
+            <a href="/pretty/add" class="btn btn-primary btn-success">
+                <span class="glyphicon glyphicon-plus" aria-hidden="true"></span>
+                新建靓号
+            </a>
+            <div style="float: right;width: 300px;">
+                <form method="get">
+                    <div class="input-group">
+                        <input type="text" name="search" class="form-control" placeholder="手机号...">
+                        <span class="input-group-btn">
+                            <button class="btn btn-default" type="submit">
+                                <span class="glyphicon glyphicon-search" aria-hidden="true"></span>
+                            </button>
+                        </span>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div class="panel panel-default">
+            <!-- Default panel contents -->
+            <div class="panel-heading">
+                <span class="glyphicon glyphicon-list-alt" aria-hidden="true"></span>
+                靓号列表
+            </div>
+
+            <!-- Table -->
+            <table class="table table-bordered">
+                <thead>
+                <tr class="text-center">
+                    <th class="text-center">序号</th>
+                    <th class="text-center">手机号</th>
+                    <th class="text-center">价格</th>
+                    <th class="text-center">级别</th>
+                    <th class="text-center">状态</th>
+                    <th class="text-center">操作</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for obj in query_set %}
+                    <tr class="text-center">
+                        {#                        <td>{{ obj.id }}</td>#}
+                        {# 遍历前端表单的序号 #}
+                        <td>{{ forloop.counter }}</td>
+                        <td>{{ obj.mobile }}</td>
+                        <td>{{ obj.price }}</td>
+                        {# 处理级别 #}
+                        <td>{{ obj.get_level_display }}</td>
+                        {# 处理状态 #}
+                        <td>{{ obj.get_status_display }}</td>
+                        <td>
+                            <a href="/pretty/{{ obj.id }}/update/" class="btn btn-primary btn-xs">编辑</a>
+                            <a href="/pretty/delete/?del_id={{ obj.id }}" class="btn btn-danger btn-xs">删除</a>
+                        </td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+
+            <ul class="pagination" style="float: right">
+                {{ page_string }}
+            </ul>
+        </div>
+    </div>
+
+{% endblock %}
